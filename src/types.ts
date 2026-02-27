@@ -15,6 +15,7 @@ export interface SkillReport {
   findings: Finding[];
   scannedFiles: number;
   score: number; // 0-100, 100 = clean
+  suppressed: number;
 }
 
 export interface ScanResult {
@@ -27,6 +28,17 @@ export interface ScanResult {
   low: number;
   info: number;
   skills: SkillReport[];
+  suppressed: number;
+}
+
+export interface AllowlistEntry {
+  rule: string;
+  file?: string;
+  reason?: string;
+}
+
+export interface Allowlist {
+  entries: AllowlistEntry[];
 }
 
 export interface DetectionRule {

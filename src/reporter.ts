@@ -40,15 +40,16 @@ function printFinding(f: Finding): void {
 function printSkill(skill: SkillReport): void {
   const sc = scoreColor(skill.score);
   const badge = skill.findings.length === 0
-    ? chalk.green("✅ CLEAN")
+    ? chalk.green("CLEAN")
     : skill.score < 50
       ? chalk.bgRed.white(" DANGEROUS ")
-      : chalk.yellow("⚠️  ISSUES");
+      : chalk.yellow("ISSUES");
 
+  const suppInfo = skill.suppressed > 0 ? `  Suppressed: ${chalk.dim(String(skill.suppressed))}` : "";
   console.log(
-    `${chalk.bold(skill.name)} ${badge}  Score: ${sc(String(skill.score))}  Files: ${skill.scannedFiles}`
+    `${chalk.bold(skill.name)} ${badge}  Score: ${sc(String(skill.score))}  Files: ${skill.scannedFiles}${suppInfo}`
   );
-  console.log(chalk.dim("─".repeat(60)));
+  console.log(chalk.dim("-".repeat(60)));
 
   if (skill.findings.length === 0) {
     console.log(chalk.green("  No issues found.\n"));
@@ -73,7 +74,8 @@ export function printReport(result: ScanResult): void {
     (result.high > 0 ? chalk.red(`${result.high} high`) + "  " : "") +
     (result.medium > 0 ? chalk.yellow(`${result.medium} medium`) + "  " : "") +
     (result.low > 0 ? chalk.blue(`${result.low} low`) + "  " : "") +
-    (result.info > 0 ? chalk.gray(`${result.info} info`) : "")
+    (result.info > 0 ? chalk.gray(`${result.info} info`) + "  " : "") +
+    (result.suppressed > 0 ? chalk.dim(`(${result.suppressed} suppressed)`) : "")
   );
   console.log();
   console.log(chalk.bold("═".repeat(60)));

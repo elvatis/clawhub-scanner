@@ -1,7 +1,7 @@
 {
   "tasks": {
     "T-003": {
-      "status": "ready",
+      "status": "done",
       "title": "Add allowlist for common false positives",
       "created": "2026-02-28T00:00:00Z",
       "depends_on": [],
@@ -23,12 +23,12 @@
     }
   },
   "last_session": {
-    "agent": "human",
-    "duration_minutes": 0,
-    "session_id": "init",
-    "phase": "planning",
+    "agent": "claude-opus-4-6",
+    "duration_minutes": 5,
+    "session_id": "t003-allowlist",
+    "phase": "implementation",
     "commit": "",
-    "timestamp": "2026-02-28T00:00:00Z"
+    "timestamp": "2026-02-28T14:15:00Z"
   },
   "token_budget": {
     "manifest_only": 100,
@@ -45,6 +45,6 @@
       "summary": "3 ready items: CI workflow, IoC indicators, allowlist"
     }
   },
-  "quick_context": "clawhub-scanner MVP complete. 3 ready v0.2 tasks: CI workflow, IoC expansion, false-positive allowlist.",
+  "quick_context": "clawhub-scanner MVP complete. T-003 done (allowlist). 2 remaining: CI workflow (T-001), IoC expansion (T-002).",
   "project": "clawhub-scanner"
 }

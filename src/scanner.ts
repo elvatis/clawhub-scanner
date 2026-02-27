@@ -3,7 +3,8 @@ import { join, relative, resolve, basename } from "node:path";
 import { homedir } from "node:os";
 import { createHash } from "node:crypto";
 import { DETECTION_RULES, KNOWN_MALICIOUS_HASHES } from "./patterns.js";
-import type { Finding, SkillReport, ScanResult, DetectionRule } from "./types.js";
+import { resolveAllowlistPaths, loadAllowlist, applyAllowlist } from "./allowlist.js";
+import type { Finding, SkillReport, ScanResult, DetectionRule, Allowlist } from "./types.js";
 
 const SCAN_EXTENSIONS = /\.(js|ts|mjs|cjs|json|md|txt|yaml|yml|sh|bash|py|toml)$/;
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB
@@ -100,7 +101,11 @@ function calculateScore(findings: Finding[]): number {
   return Math.max(0, 100 - penalty);
 }
 
-export async function scanSkill(skillPath: string): Promise<SkillReport> {
+export interface ScanSkillOptions {
+  allowlist?: Allowlist;
+}
+
+export async function scanSkill(skillPath: string, options?: ScanSkillOptions): Promise<SkillReport> {
   const name = basename(skillPath);
   const absPath = resolve(skillPath);
   const files = walkDir(absPath);
@@ -115,7 +120,7 @@ export async function scanSkill(skillPath: string): Promise<SkillReport> {
         rule: "HASH-KNOWN-MALICIOUS",
         description: "File matches known malicious hash (ClawHavoc/AMOS campaign)",
         file: relative(absPath, file),
-        match: fileHash.slice(0, 16) + "…",
+        match: fileHash.slice(0, 16) + "...",
       });
     }
 
@@ -135,16 +140,21 @@ export async function scanSkill(skillPath: string): Promise<SkillReport> {
     return true;
   });
 
+  // Apply allowlist to suppress known false positives.
+  const allowlist = options?.allowlist ?? loadAllowlist(resolveAllowlistPaths(absPath));
+  const [filtered, suppressed] = applyAllowlist(deduplicated, allowlist);
+
   // Sort: critical first
   const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
-  deduplicated.sort((a, b) => (order[a.severity] ?? 5) - (order[b.severity] ?? 5));
+  filtered.sort((a, b) => (order[a.severity] ?? 5) - (order[b.severity] ?? 5));
 
   return {
     name,
     path: absPath,
-    findings: deduplicated,
+    findings: filtered,
     scannedFiles: files.length,
-    score: calculateScore(deduplicated),
+    score: calculateScore(filtered),
+    suppressed,
   };
 }
 
@@ -175,18 +185,24 @@ export function getDefaultSkillPaths(): string[] {
   return paths;
 }
 
-export async function runScan(skillPaths?: string[]): Promise<ScanResult> {
-  const paths = skillPaths ?? getDefaultSkillPaths();
+export interface RunScanOptions {
+  skillPaths?: string[];
+  allowlist?: Allowlist;
+}
+
+export async function runScan(options?: RunScanOptions): Promise<ScanResult> {
+  const paths = options?.skillPaths ?? getDefaultSkillPaths();
   const skills: SkillReport[] = [];
 
   for (const p of paths) {
-    skills.push(await scanSkill(p));
+    skills.push(await scanSkill(p, { allowlist: options?.allowlist }));
   }
 
   // Sort: worst scores first
   skills.sort((a, b) => a.score - b.score);
 
   const allFindings = skills.flatMap((s) => s.findings);
+  const totalSuppressed = skills.reduce((sum, s) => sum + s.suppressed, 0);
 
   return {
     timestamp: new Date().toISOString(),
@@ -198,5 +214,6 @@ export async function runScan(skillPaths?: string[]): Promise<ScanResult> {
     low: allFindings.filter((f) => f.severity === "low").length,
     info: allFindings.filter((f) => f.severity === "info").length,
     skills,
+    suppressed: totalSuppressed,
   };
 }

@@ -58,6 +58,33 @@ clawhub-scanner paths
 
 Use in CI/scripts: `clawhub-scanner scan --quiet || echo "Security issues found!"`
 
+## Allowlist (False-Positive Suppression)
+
+If a rule triggers on code you've reviewed and trust, you can suppress it with an allowlist file.
+
+Create a `.clawhub-allowlist.json` in the skill directory, or a global config at `~/.config/clawhub-scanner/allowlist.json`:
+
+```json
+[
+  { "rule": "EXEC-EVAL", "reason": "eval used for intentional templating" },
+  { "rule": "NET-OUTBOUND", "file": "lib/api-client.js" },
+  { "rule": "CRED-ENV-HARVEST", "file": "src/**/*.ts", "reason": "reads config from env" }
+]
+```
+
+Each entry has:
+- `rule` (required) - the rule ID to suppress (e.g. `EXEC-EVAL`), or `*` for all rules
+- `file` (optional) - glob pattern to limit suppression to specific files
+- `reason` (optional) - why this is a false positive
+
+You can also pass a custom allowlist file via CLI:
+
+```bash
+clawhub-scanner scan --allowlist ./my-allowlist.json
+```
+
+Suppressed findings are counted and shown in the report output.
+
 ## Scan Locations
 
 By default, scans:

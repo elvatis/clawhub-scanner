@@ -2,7 +2,9 @@
 import { writeFileSync } from "node:fs";
 import { Command } from "commander";
 import { runScan, scanSkill, getDefaultSkillPaths } from "./scanner.js";
+import { loadAllowlist } from "./allowlist.js";
 import { printReport, formatJson } from "./reporter.js";
+import type { Allowlist } from "./types.js";
 
 const program = new Command();
 
@@ -19,11 +21,17 @@ program
   .option("-v, --verbose", "Show all findings including low severity")
   .option("-q, --quiet", "Only output if issues found")
   .option("-o, --output <file>", "Write report to a file instead of (or in addition to) stdout")
+  .option("-a, --allowlist <path>", "Path to allowlist JSON file for suppressing false positives")
   .action(async (opts) => {
     let result;
+    let allowlist: Allowlist | undefined;
+
+    if (opts.allowlist) {
+      allowlist = loadAllowlist([opts.allowlist]);
+    }
 
     if (opts.skill) {
-      const report = await scanSkill(opts.skill);
+      const report = await scanSkill(opts.skill, { allowlist });
       result = {
         timestamp: new Date().toISOString(),
         skillsScanned: 1,
@@ -34,9 +42,10 @@ program
         low: report.findings.filter((f) => f.severity === "low").length,
         info: report.findings.filter((f) => f.severity === "info").length,
         skills: [report],
+        suppressed: report.suppressed,
       };
     } else {
-      result = await runScan();
+      result = await runScan({ allowlist });
     }
 
     if (opts.quiet && result.totalFindings === 0) {
