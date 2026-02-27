@@ -14,23 +14,24 @@
       "created": "2026-02-28T00:00:00Z",
       "depends_on": [],
       "priority": "medium",
-      "completed": "2026-02-27T14:24:00.000Z"
+      "completed": "2026-02-27T13:25:11.011Z"
     },
     "T-001": {
-      "status": "ready",
+      "status": "done",
       "title": "Add CI workflow (lint/test) and release checklist",
       "created": "2026-02-28T00:00:00Z",
       "depends_on": [],
-      "priority": "high"
+      "priority": "high",
+      "completed": "2026-02-27T15:10:00.000Z"
     }
   },
   "last_session": {
     "agent": "claude-code",
-    "duration_minutes": 5,
-    "session_id": "t002-ioc-expansion",
+    "duration_minutes": 3,
+    "session_id": "t001-ci-workflow",
     "phase": "implementation",
     "commit": "",
-    "timestamp": "2026-02-27T14:24:00.000Z"
+    "timestamp": "2026-02-27T15:10:00.000Z"
   },
   "token_budget": {
     "manifest_only": 100,
@@ -47,6 +48,6 @@
       "summary": "3 ready items: CI workflow, IoC indicators, allowlist"
     }
   },
-  "quick_context": "clawhub-scanner MVP complete. T-002 done (IoC expansion + 14 new rules). T-003 done (allowlist). 1 remaining: CI workflow (T-001).",
+  "quick_context": "clawhub-scanner MVP complete. All tasks done: T-001 (CI + release checklist), T-002 (IoC expansion + 14 new rules), T-003 (allowlist). Ready for v0.1.0 publish.",
   "project": "clawhub-scanner"
 }
