@@ -31,7 +31,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/homeofe/clawhub-scanner"
+    "url": "https://github.com/elvatis/clawhub-scanner"
   },
   "engines": {
     "node": ">=18"
