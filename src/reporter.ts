@@ -32,7 +32,7 @@ function printFinding(f: Finding): void {
   console.log(`     ${f.description}`);
   console.log(`     ${chalk.dim(loc)}`);
   if (f.match) {
-    console.log(`     ${chalk.dim("match:")} ${chalk.red(f.match)}`);
+    console.log(`     ${chalk.dim("match:")} ${chalk.dim(f.match)}`);
   }
   console.log();
 }
@@ -72,7 +72,8 @@ export function printReport(result: ScanResult): void {
     (result.critical > 0 ? chalk.bgRed.white(` ${result.critical} CRITICAL `) + "  " : "") +
     (result.high > 0 ? chalk.red(`${result.high} high`) + "  " : "") +
     (result.medium > 0 ? chalk.yellow(`${result.medium} medium`) + "  " : "") +
-    (result.low > 0 ? chalk.blue(`${result.low} low`) : "")
+    (result.low > 0 ? chalk.blue(`${result.low} low`) + "  " : "") +
+    (result.info > 0 ? chalk.gray(`${result.info} info`) : "")
   );
   console.log();
   console.log(chalk.bold("═".repeat(60)));
@@ -85,7 +86,7 @@ export function printReport(result: ScanResult): void {
   // Summary
   console.log(chalk.bold("═".repeat(60)));
   if (result.critical > 0) {
-    console.log(chalk.bgRed.white.bold("\n ⚠️  CRITICAL FINDINGS DETECTED — Immediate action required! \n"));
+    console.log(chalk.bgRed.white.bold("\n ⚠️  CRITICAL FINDINGS DETECTED - Immediate action required! \n"));
     console.log(chalk.red("Remove or isolate affected skills before continuing to use them."));
     console.log(chalk.red("Report malicious skills: https://clawhub.com/report\n"));
   } else if (result.high > 0) {

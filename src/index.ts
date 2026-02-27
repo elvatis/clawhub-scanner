@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { writeFileSync } from "node:fs";
 import { Command } from "commander";
 import { runScan, scanSkill, getDefaultSkillPaths } from "./scanner.js";
 import { printReport, formatJson } from "./reporter.js";
@@ -17,11 +18,12 @@ program
   .option("-j, --json", "Output results as JSON")
   .option("-v, --verbose", "Show all findings including low severity")
   .option("-q, --quiet", "Only output if issues found")
-  .action((opts) => {
+  .option("-o, --output <file>", "Write report to a file instead of (or in addition to) stdout")
+  .action(async (opts) => {
     let result;
 
     if (opts.skill) {
-      const report = scanSkill(opts.skill);
+      const report = await scanSkill(opts.skill);
       result = {
         timestamp: new Date().toISOString(),
         skillsScanned: 1,
@@ -30,10 +32,11 @@ program
         high: report.findings.filter((f) => f.severity === "high").length,
         medium: report.findings.filter((f) => f.severity === "medium").length,
         low: report.findings.filter((f) => f.severity === "low").length,
+        info: report.findings.filter((f) => f.severity === "info").length,
         skills: [report],
       };
     } else {
-      result = runScan();
+      result = await runScan();
     }
 
     if (opts.quiet && result.totalFindings === 0) {
@@ -41,16 +44,32 @@ program
     }
 
     if (!opts.verbose) {
-      // Filter out low findings for default view
-      for (const skill of result.skills) {
-        skill.findings = skill.findings.filter((f) => f.severity !== "low");
-      }
+      // Shallow-copy skills/findings to avoid mutating the original result.
+      result = {
+        ...result,
+        skills: result.skills.map((s) => ({
+          ...s,
+          findings: s.findings.filter((f) => f.severity !== "low" && f.severity !== "info"),
+        })),
+      };
       result.low = 0;
+      result.info = 0;
       result.totalFindings = result.skills.reduce((sum, s) => sum + s.findings.length, 0);
     }
 
-    if (opts.json) {
-      console.log(formatJson(result));
+    const output = opts.json ? formatJson(result) : null;
+
+    if (opts.output) {
+      const content = opts.json ? formatJson(result) : formatJson(result); // always JSON to file
+      writeFileSync(opts.output, content, "utf-8");
+      if (!opts.json) {
+        // Still print human report to stdout when --output is used without --json
+        printReport(result);
+      } else {
+        console.log(output);
+      }
+    } else if (opts.json) {
+      console.log(output);
     } else {
       printReport(result);
     }

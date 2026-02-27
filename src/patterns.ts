@@ -1,4 +1,7 @@
 import type { DetectionRule } from "./types.js";
+import { C2_IP_PATTERNS, C2_DOMAINS } from "./indicators.js";
+
+export { KNOWN_MALICIOUS_HASHES } from "./indicators.js";
 
 export const DETECTION_RULES: DetectionRule[] = [
   // === CRITICAL: Known malicious infrastructure ===
@@ -6,13 +9,13 @@ export const DETECTION_RULES: DetectionRule[] = [
     id: "C2-KNOWN-IP",
     severity: "critical",
     description: "Known malicious C2 server IP address",
-    pattern: /91\.92\.242\.30|185\.215\.113\.\d+|45\.61\.136\.\d+|194\.169\.175\.\d+/,
+    pattern: new RegExp(C2_IP_PATTERNS.join("|")),
   },
   {
     id: "C2-KNOWN-DOMAIN",
     severity: "critical",
     description: "Known malicious domain associated with ClawHavoc/AMOS campaigns",
-    pattern: /clawhub-cdn\.com|skill-update\.net|openclaw-verify\.com|agent-telemetry\.io/,
+    pattern: new RegExp(C2_DOMAINS.join("|")),
   },
 
   // === HIGH: Code execution patterns ===
@@ -35,6 +38,27 @@ export const DETECTION_RULES: DetectionRule[] = [
     severity: "high",
     description: "Low-level process binding access (sandbox escape attempt)",
     pattern: /process\.binding\(|process\.dlopen\(/,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+  {
+    id: "EXEC-VM-SANDBOX",
+    severity: "high",
+    description: "Node.js VM sandbox escape attempt (vm.runInNewContext, vm.Script)",
+    pattern: /\bvm\s*\.\s*(?:runInNewContext|runInThisContext|runInContext|Script)\s*\(|require\s*\(\s*['"`]vm['"`]\s*\)/,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+  {
+    id: "EXEC-POWERSHELL",
+    severity: "high",
+    description: "PowerShell or cmd.exe invocation from JavaScript (Windows persistence)",
+    pattern: /powershell(?:\.exe)?\s|cmd(?:\.exe)?\s*\/[cCkK]|wscript|cscript|mshta/i,
+    fileFilter: /\.(js|ts|mjs|cjs|sh|bash|py)$/,
+  },
+  {
+    id: "EXEC-DYNAMIC-REQUIRE",
+    severity: "medium",
+    description: "Dynamic require() with runtime expression (obfuscated module loading)",
+    pattern: /require\s*\(\s*(?!['"`][^'"` ]+['"`]\s*\))(?:[a-z_$][a-z0-9_$]*|\[|\(|`)/i,
     fileFilter: /\.(js|ts|mjs|cjs)$/,
   },
 
@@ -82,6 +106,24 @@ export const DETECTION_RULES: DetectionRule[] = [
     description: "Regex pattern targeting API keys or tokens",
     pattern: /sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|github_pat_/,
   },
+  {
+    id: "CRED-WINDOWS",
+    severity: "high",
+    description: "Windows credential store access (DPAPI, Windows Credential Manager)",
+    pattern: /CryptUnprotectData|dpapi|wincred|Windows\.Security\.Credentials|PasswordVault|cmdkey\s+\/list/i,
+  },
+  {
+    id: "CRED-DOCKER",
+    severity: "high",
+    description: "Access to Docker registry credentials (~/.docker/config.json)",
+    pattern: /\.docker\/config\.json|docker.*auths|dockerconfigjson/i,
+  },
+  {
+    id: "CRED-KUBECONFIG",
+    severity: "high",
+    description: "Access to Kubernetes config (cluster credentials, tokens)",
+    pattern: /\.kube\/config|KUBECONFIG|kubeconfig/,
+  },
 
   // === HIGH: Data exfiltration ===
   {
@@ -109,8 +151,9 @@ export const DETECTION_RULES: DetectionRule[] = [
     id: "OBFUSC-BASE64-EXEC",
     severity: "high",
     description: "Base64 decode followed by execution (obfuscated payload)",
-    pattern: /atob\s*\(|Buffer\.from\([^)]+,\s*['"]base64['"]\).*\b(eval|exec|spawn|Function)\b/,
+    pattern: /(?:atob\s*\(|Buffer\.from\([^)]{0,120},\s*['"]base64['"]\))[\s\S]{0,200}\b(?:eval|exec|spawn|Function)\b/,
     fileFilter: /\.(js|ts|mjs|cjs)$/,
+    multiline: true,
   },
   {
     id: "OBFUSC-LARGE-ENCODED",
@@ -130,6 +173,24 @@ export const DETECTION_RULES: DetectionRule[] = [
     description: "Character code assembly (String.fromCharCode obfuscation)",
     pattern: /String\.fromCharCode\(\s*\d+\s*(?:,\s*\d+\s*){10,}\)/,
     fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+
+  // === HIGH: Prototype pollution ===
+  {
+    id: "INJECT-PROTO-POLLUTION",
+    severity: "high",
+    description: "Prototype pollution via __proto__ or constructor.prototype manipulation",
+    pattern: /\[['"`]__proto__['"`]\]|__proto__\s*[=:]\s*\{|constructor\s*\.\s*prototype\s*\[|Object\.prototype\[/,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+
+  // === HIGH: Supply chain ===
+  {
+    id: "SUPPLY-POSTINSTALL",
+    severity: "high",
+    description: "Network call or shell exec in npm lifecycle script (supply chain attack)",
+    pattern: /"(?:postinstall|preinstall|install)"\s*:\s*"[^"]*(?:curl|wget|fetch|http|bash|sh\s|exec|eval|powershell)[^"]*"/,
+    fileFilter: /package\.json$/,
   },
 
   // === MEDIUM: Suspicious file access ===
@@ -176,6 +237,14 @@ export const DETECTION_RULES: DetectionRule[] = [
     fileFilter: /\.(md|txt|yaml|yml)$/,
   },
 
+  // === HIGH: Tor / anonymization network ===
+  {
+    id: "NET-TOR",
+    severity: "high",
+    description: "Connection to Tor hidden service (.onion address)",
+    pattern: /[a-z2-7]{16,56}\.onion/i,
+  },
+
   // === LOW: Network activity ===
   {
     id: "NET-OUTBOUND",
@@ -192,8 +261,3 @@ export const DETECTION_RULES: DetectionRule[] = [
     fileFilter: /\.(js|ts|mjs|cjs)$/,
   },
 ];
-
-export const KNOWN_MALICIOUS_HASHES = new Set([
-  // ClawHavoc campaign hashes (Feb 2026)
-  // Add known-bad file hashes here as they're discovered
-]);
