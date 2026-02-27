@@ -67,13 +67,13 @@ export const DETECTION_RULES: DetectionRule[] = [
     id: "CRED-SSH",
     severity: "high",
     description: "Access to SSH keys or config",
-    pattern: /['"~]?\/?\.ssh\/(id_rsa|id_ed25519|authorized_keys|config|known_hosts)/,
+    pattern: /['"~]?\/?\.ssh\/(id_rsa|id_ed25519|id_ecdsa|authorized_keys|config|known_hosts)/,
   },
   {
     id: "CRED-AWS",
     severity: "high",
     description: "Access to AWS credentials",
-    pattern: /\.aws\/(credentials|config)|AWS_SECRET_ACCESS_KEY|AWS_ACCESS_KEY_ID/,
+    pattern: /\.aws\/(credentials|config)|AWS_SECRET_ACCESS_KEY|AWS_ACCESS_KEY_ID|AWS_SESSION_TOKEN/,
   },
   {
     id: "CRED-GNUPG",
@@ -85,7 +85,7 @@ export const DETECTION_RULES: DetectionRule[] = [
     id: "CRED-BROWSER",
     severity: "high",
     description: "Access to browser profile data (cookies, passwords, extensions)",
-    pattern: /Chrome\/User Data|\.mozilla\/firefox|Library\/Application Support\/(Google\/Chrome|Firefox)|Login Data|Cookies\.sqlite/,
+    pattern: /Chrome\/User Data|\.mozilla\/firefox|Library\/Application Support\/(Google\/Chrome|Firefox)|Login Data|Cookies\.sqlite|\.config\/chromium/,
   },
   {
     id: "CRED-KEYCHAIN",
@@ -104,7 +104,7 @@ export const DETECTION_RULES: DetectionRule[] = [
     id: "CRED-TOKEN-PATTERN",
     severity: "high",
     description: "Regex pattern targeting API keys or tokens",
-    pattern: /sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|github_pat_/,
+    pattern: /sk-[a-zA-Z0-9]{20,}|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|github_pat_|glpat-[a-zA-Z0-9\-_]{20,}|xox[bporas]-[a-zA-Z0-9\-]+/,
   },
   {
     id: "CRED-WINDOWS",
@@ -123,6 +123,31 @@ export const DETECTION_RULES: DetectionRule[] = [
     severity: "high",
     description: "Access to Kubernetes config (cluster credentials, tokens)",
     pattern: /\.kube\/config|KUBECONFIG|kubeconfig/,
+  },
+  {
+    id: "CRED-NPM-TOKEN",
+    severity: "high",
+    description: "Access to npm authentication tokens (~/.npmrc)",
+    pattern: /\.npmrc|npm_token|NPM_TOKEN|_authToken/,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+  {
+    id: "CRED-GIT-CREDENTIALS",
+    severity: "high",
+    description: "Access to Git stored credentials",
+    pattern: /\.git-credentials|\.gitconfig.*credential|git\s+credential-store/,
+  },
+  {
+    id: "CRED-AZURE",
+    severity: "high",
+    description: "Access to Azure credentials or tokens",
+    pattern: /\.azure\/(accessTokens|azureProfile)|AZURE_CLIENT_SECRET|AZURE_TENANT_ID.*AZURE_CLIENT_ID|az\s+account\s+get-access-token/,
+  },
+  {
+    id: "CRED-GCP",
+    severity: "high",
+    description: "Access to Google Cloud credentials",
+    pattern: /application_default_credentials\.json|GOOGLE_APPLICATION_CREDENTIALS|gcloud.*auth.*print-access-token|\.config\/gcloud\/credentials/,
   },
 
   // === HIGH: Data exfiltration ===
@@ -144,6 +169,33 @@ export const DETECTION_RULES: DetectionRule[] = [
     severity: "high",
     description: "DNS-based data exfiltration pattern",
     pattern: /dns\.resolve|\.burpcollaborator\.net|\.oast\.fun|\.interact\.sh|\.canarytokens\.com/,
+  },
+  {
+    id: "EXFIL-PASTEBIN",
+    severity: "high",
+    description: "Data exfiltration via paste/bin services",
+    pattern: /pastebin\.com\/api|hastebin\.com\/documents|paste\.ee\/api|dpaste\.org\/api|ix\.io|sprunge\.us/,
+  },
+  {
+    id: "EXFIL-FILE-UPLOAD",
+    severity: "high",
+    description: "File upload to anonymous hosting (exfiltration vector)",
+    pattern: /file\.io\/|transfer\.sh|0x0\.st|catbox\.moe\/user\/api|tmpfiles\.org|anonfiles\.com/,
+  },
+
+  // === HIGH: Persistence mechanisms ===
+  {
+    id: "PERSIST-CRON",
+    severity: "high",
+    description: "Crontab or scheduled task creation (persistence mechanism)",
+    pattern: /crontab\s+-|schtasks\s+\/create|Register-ScheduledTask|at\s+\d{2}:\d{2}/,
+    fileFilter: /\.(js|ts|mjs|cjs|sh|bash|py)$/,
+  },
+  {
+    id: "PERSIST-STARTUP",
+    severity: "high",
+    description: "Startup persistence (LaunchAgent, systemd, registry Run key)",
+    pattern: /LaunchAgents|LaunchDaemons|systemctl\s+enable|\.config\/autostart|HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run|HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run/i,
   },
 
   // === HIGH: Obfuscation ===
@@ -172,6 +224,27 @@ export const DETECTION_RULES: DetectionRule[] = [
     severity: "medium",
     description: "Character code assembly (String.fromCharCode obfuscation)",
     pattern: /String\.fromCharCode\(\s*\d+\s*(?:,\s*\d+\s*){10,}\)/,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+  {
+    id: "OBFUSC-UNICODE-ESCAPE",
+    severity: "medium",
+    description: "Long Unicode escape sequence (obfuscated string)",
+    pattern: /(?:\\u[0-9a-fA-F]{4}){10,}/,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+  {
+    id: "OBFUSC-BRACKET-NOTATION",
+    severity: "medium",
+    description: "Excessive bracket-notation property access (obfuscation technique)",
+    pattern: /\[['"`]\w+['"`]\]\s*\[['"`]\w+['"`]\]\s*\[['"`]\w+['"`]\]/,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+  {
+    id: "OBFUSC-SPLIT-REVERSE",
+    severity: "low",
+    description: "String reversal technique (potential payload deobfuscation)",
+    pattern: /\.split\s*\(\s*['"`]['"`]\s*\)\s*\.reverse\s*\(\s*\)\s*\.join\s*\(/,
     fileFilter: /\.(js|ts|mjs|cjs)$/,
   },
 
@@ -258,6 +331,38 @@ export const DETECTION_RULES: DetectionRule[] = [
     severity: "low",
     description: "WebSocket connection (potential persistent C2 channel)",
     pattern: /new\s+WebSocket\s*\(|ws:\/\/|wss:\/\//,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+  {
+    id: "NET-NON-STANDARD-PORT",
+    severity: "medium",
+    description: "HTTP request to non-standard port (potential C2 evasion)",
+    pattern: /https?:\/\/[^/:]+:(?!80\b|443\b|8080\b|8443\b|3000\b|5000\b)\d{2,5}\b/,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+
+  // === MEDIUM: Anti-analysis / evasion ===
+  {
+    id: "EVASION-DEBUGGER",
+    severity: "medium",
+    description: "Anti-debugging technique (debugger statement or detection)",
+    pattern: /\bdebugger\b|anti.?debug|isDebugging|detectDevTools/i,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+  {
+    id: "EVASION-TIMING",
+    severity: "low",
+    description: "Delayed execution (setTimeout with long delay, potential sandbox evasion)",
+    pattern: /setTimeout\s*\([^,]+,\s*(?:[3-9]\d{4,}|[1-9]\d{5,})\s*\)/,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+
+  // === HIGH: WASM / native code loading ===
+  {
+    id: "EXEC-WASM",
+    severity: "high",
+    description: "WebAssembly instantiation (can hide malicious logic in binary)",
+    pattern: /WebAssembly\.(?:instantiate|compile|Module)\s*\(|\.wasm['"`]/,
     fileFilter: /\.(js|ts|mjs|cjs)$/,
   },
 ];

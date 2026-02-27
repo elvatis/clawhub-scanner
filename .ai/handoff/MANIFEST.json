@@ -5,14 +5,16 @@
       "title": "Add allowlist for common false positives",
       "created": "2026-02-28T00:00:00Z",
       "depends_on": [],
-      "priority": "medium"
+      "priority": "medium",
+      "completed": "2026-02-27T13:15:43.383Z"
     },
     "T-002": {
-      "status": "ready",
+      "status": "done",
       "title": "Expand IoC indicators list and rule tuning",
       "created": "2026-02-28T00:00:00Z",
       "depends_on": [],
-      "priority": "medium"
+      "priority": "medium",
+      "completed": "2026-02-27T14:24:00.000Z"
     },
     "T-001": {
       "status": "ready",
@@ -23,12 +25,12 @@
     }
   },
   "last_session": {
-    "agent": "claude-opus-4-6",
+    "agent": "claude-code",
     "duration_minutes": 5,
-    "session_id": "t003-allowlist",
+    "session_id": "t002-ioc-expansion",
     "phase": "implementation",
     "commit": "",
-    "timestamp": "2026-02-28T14:15:00Z"
+    "timestamp": "2026-02-27T14:24:00.000Z"
   },
   "token_budget": {
     "manifest_only": 100,
@@ -45,6 +47,6 @@
       "summary": "3 ready items: CI workflow, IoC indicators, allowlist"
     }
   },
-  "quick_context": "clawhub-scanner MVP complete. T-003 done (allowlist). 2 remaining: CI workflow (T-001), IoC expansion (T-002).",
+  "quick_context": "clawhub-scanner MVP complete. T-002 done (IoC expansion + 14 new rules). T-003 done (allowlist). 1 remaining: CI workflow (T-001).",
   "project": "clawhub-scanner"
 }
