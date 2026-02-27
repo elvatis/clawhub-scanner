@@ -1,0 +1,50 @@
+{
+  "tasks": {
+    "T-003": {
+      "status": "ready",
+      "title": "Add allowlist for common false positives",
+      "created": "2026-02-28T00:00:00Z",
+      "depends_on": [],
+      "priority": "medium"
+    },
+    "T-002": {
+      "status": "ready",
+      "title": "Expand IoC indicators list and rule tuning",
+      "created": "2026-02-28T00:00:00Z",
+      "depends_on": [],
+      "priority": "medium"
+    },
+    "T-001": {
+      "status": "ready",
+      "title": "Add CI workflow (lint/test) and release checklist",
+      "created": "2026-02-28T00:00:00Z",
+      "depends_on": [],
+      "priority": "high"
+    }
+  },
+  "last_session": {
+    "agent": "human",
+    "duration_minutes": 0,
+    "session_id": "init",
+    "phase": "planning",
+    "commit": "",
+    "timestamp": "2026-02-28T00:00:00Z"
+  },
+  "token_budget": {
+    "manifest_only": 100,
+    "full_read": 1200,
+    "manifest_plus_core": 400
+  },
+  "aahp_version": "3.0",
+  "next_task_id": 4,
+  "files": {
+    "NEXT_ACTIONS.md": {
+      "updated": "2026-02-28T00:00:00Z",
+      "lines": 10,
+      "checksum": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "summary": "3 ready items: CI workflow, IoC indicators, allowlist"
+    }
+  },
+  "quick_context": "clawhub-scanner MVP complete. 3 ready v0.2 tasks: CI workflow, IoC expansion, false-positive allowlist.",
+  "project": "clawhub-scanner"
+}
