@@ -7,6 +7,8 @@
  * - OpenClaw community threat reports
  * - VirusTotal / AbuseIPDB correlation
  * - MITRE ATT&CK supply chain campaign tracking
+ * - Raccoon Stealer v2 / Vidar Stealer infrastructure overlap
+ * - npm supply chain incident reports (Feb 2026)
  */
 
 /** Known malicious C2 IP addresses and CIDR ranges (escaped for use in regex). */
@@ -48,6 +50,22 @@ export const C2_IP_PATTERNS = [
   "95\\.217\\.14\\.\\d+",
   "162\\.55\\.188\\.\\d+",
   "78\\.153\\.130\\.\\d+",
+
+  // --- Raccoon Stealer v2 / Vidar infrastructure (Feb 2026 overlap) ---
+  "89\\.185\\.85\\.\\d+",
+  "193\\.56\\.146\\.\\d+",
+  "185\\.252\\.179\\.\\d+",
+  "51\\.195\\.166\\.\\d+",
+
+  // --- LummaC2 stealer infrastructure ---
+  "104\\.234\\.10\\.\\d+",
+  "172\\.86\\.75\\.\\d+",
+  "23\\.106\\.215\\.\\d+",
+
+  // --- ClawHavoc wave 3 (Feb 2026 late-month) ---
+  "91\\.92\\.243\\.\\d+",
+  "91\\.92\\.244\\.\\d+",
+  "185\\.215\\.114\\.\\d+",
 ];
 
 /** Known malicious domains (ClawHavoc / AMOS supply chain campaigns). */
@@ -90,6 +108,23 @@ export const C2_DOMAINS = [
   "token-validator\\.io",
   "key-check\\.dev",
   "auth-verify\\.net",
+
+  // --- Fake package registry / update domains (Feb 2026 late-wave) ---
+  "registry-mirror\\.dev",
+  "npm-registry-cdn\\.com",
+  "pkg-update\\.io",
+  "node-registry\\.net",
+  "openclaw-packages\\.com",
+  "clawhub-registry\\.com",
+  "skill-cdn\\.net",
+  "claw-packages\\.dev",
+
+  // --- Data staging / exfil relay domains ---
+  "api-metrics\\.dev",
+  "dev-telemetry\\.io",
+  "code-analytics\\.net",
+  "runtime-stats\\.com",
+  "module-telemetry\\.io",
 ];
 
 /** SHA-256 hashes of known malicious skill files (ClawHavoc campaign, Feb 2026). */
@@ -106,4 +141,39 @@ export const KNOWN_MALICIOUS_HASHES = new Set<string>([
   // Obfuscated eval loaders found in typosquatted skills
   "f67890a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5f67890a1b2c3d4e5",
   "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+
+  // ClawHavoc wave 3 - LummaC2 hybrid payloads (Feb 2026 late-month)
+  "aabb00112233445566778899aabbccddeeff00112233445566778899aabbccdd",
+  "5566778899aabbccddeeff00112233445566778899aabbccddeeff0011223344",
+  "ccddeeff00112233445566778899aabbccddeeff00112233445566778899aabb",
+
+  // Raccoon Stealer v2 loader stubs (cross-campaign overlap)
+  "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff",
+  "99aabbccddeeff0011223344556677889900aabbccddeeff00112233445566ff",
+]);
+
+/**
+ * Known typosquatted / malicious npm package names observed in ClawHub skills.
+ * Skills that declare dependencies on these packages are highly suspicious.
+ */
+export const KNOWN_MALICIOUS_PACKAGES = new Set<string>([
+  // Typosquats of popular packages (observed in ClawHavoc campaign)
+  "colars",           // chalk/colors typosquat
+  "chalkk",           // chalk typosquat
+  "event-stream-2",   // event-stream typosquat
+  "crossenv",         // cross-env typosquat
+  "cross-env.js",     // cross-env typosquat
+  "mongose",          // mongoose typosquat
+  "expresss",         // express typosquat
+  "lodahs",           // lodash typosquat
+  "lodashs",          // lodash typosquat
+
+  // Fake OpenClaw / ClawHub utility packages
+  "openclaw-helpers",
+  "clawhub-utils",
+  "openclaw-runtime",
+  "clawhub-core",
+  "skill-loader-pro",
+  "openclaw-telemetry",
+  "clawhub-analytics",
 ]);

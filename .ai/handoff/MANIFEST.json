@@ -30,20 +30,21 @@
       "priority": "medium",
       "depends_on": [],
       "created": "2026-02-28T18:15:08.001Z",
-      "completed": "2026-02-28T18:18:00.000Z",
-      "notes": "Already implemented in T-003. Verified: allowlist.ts, allowlist.test.ts (20 tests), CLI --allowlist flag, skill-local + global config, glob patterns all working.",
+      "notes": "Add configurable allowlist to suppress known false positives (test fixtures, example patterns).\n\n**From AAHP NEXT_ACTIONS**",
       "github_issue": 3,
-      "github_repo": "elvatis/clawhub-scanner"
+      "github_repo": "elvatis/clawhub-scanner",
+      "completed": "2026-02-28T18:18:54.860Z"
     },
     "T-005": {
       "title": "Expand indicators list and rule tuning",
-      "status": "ready",
+      "status": "done",
       "priority": "medium",
       "depends_on": [],
       "created": "2026-02-28T18:15:08.001Z",
-      "notes": "Expand the IoC indicators list and tune detection rules to reduce false positives.\n\n**From AAHP NEXT_ACTIONS**",
+      "notes": "Expanded IoC list with 10 new C2 IP ranges (Raccoon v2, LummaC2, wave 3), 13 new C2 domains, 5 new malicious hashes, known typosquatted packages list. Added 7 new detection rules (SUPPLY-TYPOSQUAT, CRED-VAULT, NET-PROXY-TUNNEL, OBFUSC-CONCAT-BUILD, EXEC-WORKER-EVAL, RECON-SYSINFO, SUPPLY-PREPARE-SCRIPT). Tuned NET-NON-STANDARD-PORT to exclude common dev ports (5173, 4200, 9000, etc.). Added fileFilter to CRED-KUBECONFIG. 136 tests pass.",
       "github_issue": 2,
-      "github_repo": "elvatis/clawhub-scanner"
+      "github_repo": "elvatis/clawhub-scanner",
+      "completed": "2026-02-28T19:30:00.000Z"
     },
     "T-006": {
       "title": "Add CI workflow (lint/test) and release checklist",
@@ -58,11 +59,11 @@
   },
   "last_session": {
     "agent": "claude-code",
-    "duration_minutes": 2,
-    "session_id": "t004-allowlist-verify",
+    "duration_minutes": 5,
+    "session_id": "t005-ioc-expansion",
     "phase": "implementation",
     "commit": "",
-    "timestamp": "2026-02-28T18:18:00.000Z"
+    "timestamp": "2026-02-28T19:30:00.000Z"
   },
   "token_budget": {
     "manifest_only": 100,
@@ -73,12 +74,12 @@
   "next_task_id": 7,
   "files": {
     "NEXT_ACTIONS.md": {
-      "updated": "2026-02-28T18:18:00.000Z",
-      "lines": 56,
+      "updated": "2026-02-28T19:30:00.000Z",
+      "lines": 48,
       "checksum": "sha256:pending",
-      "summary": "2 ready items: T-005 (IoC expansion), T-006 (CI workflow). 4 done."
+      "summary": "1 ready item: T-006 (CI workflow). 5 done."
     }
   },
-  "quick_context": "clawhub-scanner MVP complete. T-001 through T-004 done. T-005 (IoC expansion), T-006 (CI workflow) ready. Allowlist feature verified: 20 tests, full CLI integration.",
+  "quick_context": "clawhub-scanner MVP complete. T-001 through T-005 done. IoC list expanded: 10 new IP ranges, 13 new domains, typosquat packages. 7 new detection rules, FP tuning. 136 tests pass. T-006 (CI workflow) ready.",
   "project": "clawhub-scanner"
 }

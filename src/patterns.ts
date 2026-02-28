@@ -1,7 +1,7 @@
 import type { DetectionRule } from "./types.js";
-import { C2_IP_PATTERNS, C2_DOMAINS } from "./indicators.js";
+import { C2_IP_PATTERNS, C2_DOMAINS, KNOWN_MALICIOUS_PACKAGES } from "./indicators.js";
 
-export { KNOWN_MALICIOUS_HASHES } from "./indicators.js";
+export { KNOWN_MALICIOUS_HASHES, KNOWN_MALICIOUS_PACKAGES } from "./indicators.js";
 
 export const DETECTION_RULES: DetectionRule[] = [
   // === CRITICAL: Known malicious infrastructure ===
@@ -123,6 +123,7 @@ export const DETECTION_RULES: DetectionRule[] = [
     severity: "high",
     description: "Access to Kubernetes config (cluster credentials, tokens)",
     pattern: /\.kube\/config|KUBECONFIG|kubeconfig/,
+    fileFilter: /\.(js|ts|mjs|cjs|sh|bash|py)$/,
   },
   {
     id: "CRED-NPM-TOKEN",
@@ -337,7 +338,7 @@ export const DETECTION_RULES: DetectionRule[] = [
     id: "NET-NON-STANDARD-PORT",
     severity: "medium",
     description: "HTTP request to non-standard port (potential C2 evasion)",
-    pattern: /https?:\/\/[^/:]+:(?!80\b|443\b|8080\b|8443\b|3000\b|5000\b)\d{2,5}\b/,
+    pattern: /https?:\/\/[^/:]+:(?!80\b|443\b|8080\b|8443\b|3000\b|5000\b|5173\b|5174\b|4200\b|9000\b|9090\b|4000\b|3001\b)\d{2,5}\b/,
     fileFilter: /\.(js|ts|mjs|cjs)$/,
   },
 
@@ -364,5 +365,74 @@ export const DETECTION_RULES: DetectionRule[] = [
     description: "WebAssembly instantiation (can hide malicious logic in binary)",
     pattern: /WebAssembly\.(?:instantiate|compile|Module)\s*\(|\.wasm['"`]/,
     fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+
+  // === HIGH: Supply chain - typosquatted packages ===
+  ...(() => {
+    const pkgPattern = [...KNOWN_MALICIOUS_PACKAGES]
+      .map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("|");
+    return [{
+      id: "SUPPLY-TYPOSQUAT",
+      severity: "critical",
+      description: "Dependency on known typosquatted / malicious npm package",
+      pattern: new RegExp(`"(?:${pkgPattern})"\\s*:\\s*"`),
+      fileFilter: /package\.json$/,
+    } satisfies DetectionRule];
+  })(),
+
+  // === HIGH: HashiCorp Vault / secrets manager credentials ===
+  {
+    id: "CRED-VAULT",
+    severity: "high",
+    description: "Access to HashiCorp Vault tokens or secrets manager credentials",
+    pattern: /VAULT_TOKEN|vault\s+token\s+lookup|\.vault-token|VAULT_ADDR.*VAULT_TOKEN/i,
+    fileFilter: /\.(js|ts|mjs|cjs|sh|bash|py)$/,
+  },
+
+  // === MEDIUM: Proxy / tunnel usage ===
+  {
+    id: "NET-PROXY-TUNNEL",
+    severity: "medium",
+    description: "SOCKS or HTTP proxy/tunnel usage (traffic routing evasion)",
+    pattern: /socks[45]?:\/\/|HTTPS?_PROXY\s*=|socksPort|createConnection.*proxy|tunnel-agent/i,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+
+  // === MEDIUM: String concatenation to build sensitive identifiers ===
+  {
+    id: "OBFUSC-CONCAT-BUILD",
+    severity: "medium",
+    description: "String concatenation to construct sensitive function names (evasion technique)",
+    pattern: /['"`]ev['"`]\s*\+\s*['"`]al['"`]|['"`]exe['"`]\s*\+\s*['"`]c['"`]|['"`]chi['"`]\s*\+\s*['"`]ld_proc['"`]/,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+
+  // === HIGH: Worker thread with eval-like patterns ===
+  {
+    id: "EXEC-WORKER-EVAL",
+    severity: "high",
+    description: "Worker thread with eval string (code execution in separate thread)",
+    pattern: /new\s+Worker\s*\([^)]*(?:eval|data:|blob:)/i,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+
+  // === HIGH: Network interface / system enumeration ===
+  {
+    id: "RECON-SYSINFO",
+    severity: "medium",
+    description: "System reconnaissance (hostname, network interfaces, user info)",
+    pattern: /os\.(?:hostname|networkInterfaces|userInfo)\s*\(\s*\).*(?:fetch|http|send|post|axios)/,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+    multiline: true,
+  },
+
+  // === MEDIUM: Suspicious npm lifecycle with network ===
+  {
+    id: "SUPPLY-PREPARE-SCRIPT",
+    severity: "medium",
+    description: "Network call in npm prepare/prepublish script (supply chain risk)",
+    pattern: /"(?:prepare|prepublish|prepublishOnly)"\s*:\s*"[^"]*(?:curl|wget|fetch|http|bash|sh\s)[^"]*"/,
+    fileFilter: /package\.json$/,
   },
 ];

