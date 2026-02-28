@@ -41,29 +41,30 @@
       "priority": "medium",
       "depends_on": [],
       "created": "2026-02-28T18:15:08.001Z",
-      "notes": "Expanded IoC list with 10 new C2 IP ranges (Raccoon v2, LummaC2, wave 3), 13 new C2 domains, 5 new malicious hashes, known typosquatted packages list. Added 7 new detection rules (SUPPLY-TYPOSQUAT, CRED-VAULT, NET-PROXY-TUNNEL, OBFUSC-CONCAT-BUILD, EXEC-WORKER-EVAL, RECON-SYSINFO, SUPPLY-PREPARE-SCRIPT). Tuned NET-NON-STANDARD-PORT to exclude common dev ports (5173, 4200, 9000, etc.). Added fileFilter to CRED-KUBECONFIG. 136 tests pass.",
+      "notes": "Expand the IoC indicators list and tune detection rules to reduce false positives.\n\n**From AAHP NEXT_ACTIONS**",
       "github_issue": 2,
       "github_repo": "elvatis/clawhub-scanner",
-      "completed": "2026-02-28T19:30:00.000Z"
+      "completed": "2026-02-28T18:31:38.070Z"
     },
     "T-006": {
       "title": "Add CI workflow (lint/test) and release checklist",
-      "status": "ready",
+      "status": "done",
       "priority": "medium",
       "depends_on": [],
       "created": "2026-02-28T18:15:08.001Z",
       "notes": "Set up GitHub Actions CI with lint and test steps. Add release checklist.\n\n**From AAHP NEXT_ACTIONS**",
       "github_issue": 1,
-      "github_repo": "elvatis/clawhub-scanner"
+      "github_repo": "elvatis/clawhub-scanner",
+      "completed": "2026-02-28T19:37:00.000Z"
     }
   },
   "last_session": {
     "agent": "claude-code",
-    "duration_minutes": 5,
-    "session_id": "t005-ioc-expansion",
+    "duration_minutes": 3,
+    "session_id": "t006-ci-workflow",
     "phase": "implementation",
-    "commit": "721b0d9",
-    "timestamp": "2026-02-28T19:30:00.000Z"
+    "commit": "pending",
+    "timestamp": "2026-02-28T19:37:00.000Z"
   },
   "token_budget": {
     "manifest_only": 100,
@@ -77,9 +78,9 @@
       "updated": "2026-02-28T19:30:00.000Z",
       "lines": 48,
       "checksum": "sha256:pending",
-      "summary": "1 ready item: T-006 (CI workflow). 5 done."
+      "summary": "All 6 tasks done. No ready or blocked items."
     }
   },
-  "quick_context": "clawhub-scanner MVP complete. T-001 through T-005 done. IoC list expanded: 10 new IP ranges, 13 new domains, typosquat packages. 7 new detection rules, FP tuning. 136 tests pass. T-006 (CI workflow) ready.",
+  "quick_context": "clawhub-scanner MVP complete. All tasks (T-001 through T-006) done. CI workflow with concurrency groups, multi-node matrix (18/20/22), fail-fast disabled. Publish workflow runs lint+test+build before npm publish. Release checklist in place. 136 tests pass.",
   "project": "clawhub-scanner"
 }
