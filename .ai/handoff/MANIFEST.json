@@ -56,6 +56,51 @@
       "github_issue": 1,
       "github_repo": "elvatis/clawhub-scanner",
       "completed": "2026-02-28T18:37:43.116Z"
+    },
+    "T-007": {
+      "title": "Implement `update` command for threat intelligence feeds [high]",
+      "status": "ready",
+      "priority": "medium",
+      "depends_on": [],
+      "created": "2026-03-02T03:44:58.469Z",
+      "github_issue": 4,
+      "github_repo": "elvatis/clawhub-scanner"
+    },
+    "T-008": {
+      "title": "Export programmatic API and remove unused `glob` dependency [high]",
+      "status": "ready",
+      "priority": "medium",
+      "depends_on": [],
+      "created": "2026-03-02T03:44:58.469Z",
+      "github_issue": 5,
+      "github_repo": "elvatis/clawhub-scanner"
+    },
+    "T-009": {
+      "title": "Add reporter tests and CI code coverage threshold [medium]",
+      "status": "ready",
+      "priority": "medium",
+      "depends_on": [],
+      "created": "2026-03-02T03:44:58.470Z",
+      "github_issue": 6,
+      "github_repo": "elvatis/clawhub-scanner"
+    },
+    "T-010": {
+      "title": "Replace placeholder malicious hashes with real IoCs [medium]",
+      "status": "ready",
+      "priority": "medium",
+      "depends_on": [],
+      "created": "2026-03-02T03:44:58.470Z",
+      "github_issue": 7,
+      "github_repo": "elvatis/clawhub-scanner"
+    },
+    "T-011": {
+      "title": "Add `--scan-path` CLI option and fix `--output` file format bug [low]",
+      "status": "ready",
+      "priority": "medium",
+      "depends_on": [],
+      "created": "2026-03-02T03:44:58.470Z",
+      "github_issue": 8,
+      "github_repo": "elvatis/clawhub-scanner"
     }
   },
   "last_session": {
@@ -72,7 +117,7 @@
     "manifest_plus_core": 400
   },
   "aahp_version": "3.0",
-  "next_task_id": 7,
+  "next_task_id": 12,
   "files": {
     "NEXT_ACTIONS.md": {
       "updated": "2026-02-28T19:30:00.000Z",
