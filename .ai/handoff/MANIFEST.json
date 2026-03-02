@@ -60,7 +60,7 @@
     "T-007": {
       "title": "Implement `update` command for threat intelligence feeds [high]",
       "status": "ready",
-      "priority": "medium",
+      "priority": "high",
       "depends_on": [],
       "created": "2026-03-02T03:44:58.469Z",
       "github_issue": 4,
@@ -69,7 +69,7 @@
     "T-008": {
       "title": "Export programmatic API and remove unused `glob` dependency [high]",
       "status": "ready",
-      "priority": "medium",
+      "priority": "high",
       "depends_on": [],
       "created": "2026-03-02T03:44:58.469Z",
       "github_issue": 5,
@@ -96,7 +96,7 @@
     "T-011": {
       "title": "Add `--scan-path` CLI option and fix `--output` file format bug [low]",
       "status": "ready",
-      "priority": "medium",
+      "priority": "low",
       "depends_on": [],
       "created": "2026-03-02T03:44:58.470Z",
       "github_issue": 8,
