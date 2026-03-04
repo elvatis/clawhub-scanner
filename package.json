@@ -1,6 +1,6 @@
 {
   "name": "@elvatis_com/clawhub-scanner",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Scan ClawHub skills for malware, credential theft, and security risks",
   "type": "module",
   "main": "dist/index.js",
