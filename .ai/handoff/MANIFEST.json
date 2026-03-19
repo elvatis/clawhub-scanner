@@ -68,12 +68,14 @@
     },
     "T-008": {
       "title": "Export programmatic API and remove unused `glob` dependency [high]",
-      "status": "ready",
+      "status": "done",
       "priority": "high",
       "depends_on": [],
       "created": "2026-03-02T03:44:58.469Z",
       "github_issue": 5,
-      "github_repo": "elvatis/clawhub-scanner"
+      "github_repo": "elvatis/clawhub-scanner",
+      "completed": "2026-03-19T04:02:00.000Z",
+      "notes": "Split CLI into src/cli.ts. Rewrote src/index.ts as clean programmatic API. Added exports field to package.json. Removed glob dependency. Added tests/lib.test.ts (14 tests). 150 tests pass total. Version bumped to 0.1.2."
     },
     "T-009": {
       "title": "Add reporter tests and CI code coverage threshold [medium]",

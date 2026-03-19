@@ -48,6 +48,44 @@ clawhub-scanner paths
 | **Prompt Injection** | Medium | "Ignore previous instructions", system prompt overrides |
 | **Network Activity** | Low | Outbound HTTP to unknown domains, WebSocket connections |
 
+## Programmatic API
+
+The scanner can be used as a library in your own tools, CI pipelines, or IDE plugins:
+
+```ts
+import { runScan, scanSkill } from '@elvatis_com/clawhub-scanner';
+import type { ScanResult, SkillReport } from '@elvatis_com/clawhub-scanner';
+
+// Scan all installed skills
+const result: ScanResult = await runScan();
+console.log(`Found ${result.critical} critical issues`);
+
+// Scan a specific skill directory
+const report: SkillReport = await scanSkill('/path/to/my-skill');
+console.log(`Score: ${report.score}/100`);
+
+// Scan with a custom allowlist
+import { loadAllowlist } from '@elvatis_com/clawhub-scanner';
+const allowlist = loadAllowlist(['/path/to/allowlist.json']);
+const result2 = await runScan({ allowlist });
+
+// Scan custom paths
+const result3 = await runScan({ skillPaths: ['./skills/skill-a', './skills/skill-b'] });
+```
+
+Available exports:
+- `runScan(options?)` — scan one or more skill directories, returns `ScanResult`
+- `scanSkill(path, options?)` — scan a single skill directory, returns `SkillReport`
+- `getDefaultSkillPaths()` — returns the default skill directories
+- `hashFile(path)` — SHA-256 hash a file (returns `null` on error)
+- `loadAllowlist(paths)` — load and merge allowlist files
+- `resolveAllowlistPaths(skillPath?)` — resolve default allowlist locations
+- `applyAllowlist(findings, allowlist)` — filter findings through an allowlist
+- `isSuppressed(finding, allowlist)` — check if a single finding is suppressed
+- `formatJson(result)` — serialize a `ScanResult` to JSON string
+- `printReport(result)` — print a human-readable report to stdout
+- All types: `ScanResult`, `SkillReport`, `Finding`, `Severity`, `Allowlist`, `AllowlistEntry`, `DetectionRule`
+
 ## Exit Codes
 
 | Code | Meaning |
