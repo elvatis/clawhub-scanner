@@ -17,10 +17,11 @@ program
   .command("scan")
   .description("Scan installed skills for security issues")
   .option("-s, --skill <path>", "Scan a specific skill directory")
+  .option("--scan-path <path>", "Alias for --skill: scan a specific skill directory")
   .option("-j, --json", "Output results as JSON")
   .option("-v, --verbose", "Show all findings including low severity")
   .option("-q, --quiet", "Only output if issues found")
-  .option("-o, --output <file>", "Write report to a file instead of (or in addition to) stdout")
+  .option("-o, --output <file>", "Write report to a file (JSON when --json flag set, human-readable text otherwise)")
   .option("-a, --allowlist <path>", "Path to allowlist JSON file for suppressing false positives")
   .action(async (opts) => {
     let result;
@@ -30,8 +31,11 @@ program
       allowlist = loadAllowlist([opts.allowlist]);
     }
 
-    if (opts.skill) {
-      const report = await scanSkill(opts.skill, { allowlist });
+    // --scan-path is an alias for --skill
+    const skillPath: string | undefined = opts.skill ?? opts.scanPath;
+
+    if (skillPath) {
+      const report = await scanSkill(skillPath, { allowlist });
       result = {
         timestamp: new Date().toISOString(),
         skillsScanned: 1,
@@ -66,19 +70,30 @@ program
       result.totalFindings = result.skills.reduce((sum, s) => sum + s.findings.length, 0);
     }
 
-    const output = opts.json ? formatJson(result) : null;
-
     if (opts.output) {
-      const content = opts.json ? formatJson(result) : formatJson(result); // always JSON to file
-      writeFileSync(opts.output, content, "utf-8");
-      if (!opts.json) {
-        // Still print human report to stdout when --output is used without --json
-        printReport(result);
+      // Bug fix: respect --json flag when writing to file.
+      // Previously always wrote JSON regardless of --json flag.
+      // Now: --json writes JSON to file; without --json writes human-readable text.
+      if (opts.json) {
+        writeFileSync(opts.output, formatJson(result), "utf-8");
+        // Also print JSON to stdout for piping
+        console.log(formatJson(result));
       } else {
-        console.log(output);
+        // Capture printReport output and write to file as plain text
+        const lines: string[] = [];
+        const orig = console.log.bind(console);
+        console.log = (...args: unknown[]) => {
+          // Strip ANSI escape codes for file output
+          const line = args.map(String).join(" ").replace(/\x1b\[[0-9;]*m/g, "");
+          lines.push(line);
+          orig(...args);
+        };
+        printReport(result);
+        console.log = orig;
+        writeFileSync(opts.output, lines.join("\n") + "\n", "utf-8");
       }
     } else if (opts.json) {
-      console.log(output);
+      console.log(formatJson(result));
     } else {
       printReport(result);
     }

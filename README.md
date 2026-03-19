@@ -23,11 +23,18 @@ npm install -g @elvatis_com/clawhub-scanner
 # Scan all installed skills
 clawhub-scanner scan
 
-# Scan a specific skill
+# Scan a specific skill directory (two equivalent options)
 clawhub-scanner scan --skill ~/.openclaw/skills/some-skill
+clawhub-scanner scan --scan-path ~/.openclaw/skills/some-skill
 
 # JSON output for automation
 clawhub-scanner scan --json
+
+# Write report to a file (human-readable text)
+clawhub-scanner scan --output report.txt
+
+# Write JSON report to a file
+clawhub-scanner scan --json --output report.json
 
 # Include low-severity findings
 clawhub-scanner scan --verbose
@@ -35,6 +42,18 @@ clawhub-scanner scan --verbose
 # Show scanned directories
 clawhub-scanner paths
 ```
+
+### Options
+
+| Flag | Alias | Description |
+|------|-------|-------------|
+| `--skill <path>` | `-s` | Scan a specific skill directory |
+| `--scan-path <path>` | | Alias for `--skill` |
+| `--json` | `-j` | Output results as JSON |
+| `--verbose` | `-v` | Include low/info severity findings |
+| `--quiet` | `-q` | Suppress output when no issues found |
+| `--output <file>` | `-o` | Write report to file (text or JSON based on `--json` flag) |
+| `--allowlist <path>` | `-a` | Path to allowlist JSON file |
 
 ## What It Detects
 
