@@ -4,6 +4,7 @@ import { Command } from "commander";
 import { runScan, scanSkill, getDefaultSkillPaths } from "./scanner.js";
 import { loadAllowlist } from "./allowlist.js";
 import { printReport, formatJson } from "./reporter.js";
+import { updateThreatFeed, DEFAULT_FEED_URL, getDefaultCachePath } from "./updater.js";
 import type { Allowlist } from "./types.js";
 
 const program = new Command();
@@ -113,6 +114,45 @@ program
     for (const p of paths) {
       console.log(`  ${p}`);
     }
+  });
+
+program
+  .command("update")
+  .description("Refresh threat intelligence data from remote feed or local file")
+  .option(
+    "-s, --source <url-or-path>",
+    `Feed source: URL or local file path (default: ${DEFAULT_FEED_URL})`
+  )
+  .option(
+    "--cache <path>",
+    `Path to local threat-feed cache (default: ${getDefaultCachePath()})`
+  )
+  .option("--timeout <ms>", "Request timeout in milliseconds", "15000")
+  .action(async (opts) => {
+    const source: string | undefined = opts.source;
+    const cachePath: string | undefined = opts.cache;
+    const timeoutMs = parseInt(String(opts.timeout), 10) || 15_000;
+
+    const displaySource = source ?? DEFAULT_FEED_URL;
+    console.log(`Fetching threat intelligence feed from: ${displaySource}`);
+
+    const result = await updateThreatFeed({ source, cachePath, timeoutMs });
+
+    if (!result.success) {
+      console.error(`\n✗ Update failed: ${result.error}`);
+      process.exit(1);
+    }
+
+    console.log(`✓ Feed updated successfully`);
+    console.log(`  Cached at: ${result.cachePath}`);
+    if (result.stats) {
+      const s = result.stats;
+      console.log(`  C2 IP patterns:    ${s.c2IpPatterns}`);
+      console.log(`  C2 domains:        ${s.c2Domains}`);
+      console.log(`  Malicious hashes:  ${s.maliciousHashes}`);
+      console.log(`  Malicious pkgs:    ${s.maliciousPackages}`);
+    }
+    process.exit(0);
   });
 
 program.parse();

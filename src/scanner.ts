@@ -2,8 +2,10 @@ import { readFileSync, readdirSync, statSync, existsSync, createReadStream } fro
 import { join, relative, resolve, basename } from "node:path";
 import { homedir } from "node:os";
 import { createHash } from "node:crypto";
-import { DETECTION_RULES, KNOWN_MALICIOUS_HASHES } from "./patterns.js";
+import { DETECTION_RULES, KNOWN_MALICIOUS_HASHES, KNOWN_MALICIOUS_PACKAGES } from "./patterns.js";
+import { C2_IP_PATTERNS, C2_DOMAINS } from "./indicators.js";
 import { resolveAllowlistPaths, loadAllowlist, applyAllowlist } from "./allowlist.js";
+import { loadCachedFeed, mergeIndicators } from "./updater.js";
 import type { Finding, SkillReport, ScanResult, DetectionRule, Allowlist } from "./types.js";
 
 const SCAN_EXTENSIONS = /\.(js|ts|mjs|cjs|json|md|txt|yaml|yml|sh|bash|py|toml)$/;
@@ -103,6 +105,10 @@ function calculateScore(findings: Finding[]): number {
 
 export interface ScanSkillOptions {
   allowlist?: Allowlist;
+  /** Path to the threat-feed cache file. Defaults to ~/.config/clawhub-scanner/threat-feed.json. */
+  cachePath?: string;
+  /** Set to true to skip loading the cached threat feed (offline/air-gap mode). */
+  offline?: boolean;
 }
 
 export async function scanSkill(skillPath: string, options?: ScanSkillOptions): Promise<SkillReport> {
@@ -111,10 +117,42 @@ export async function scanSkill(skillPath: string, options?: ScanSkillOptions): 
   const files = walkDir(absPath);
   const findings: Finding[] = [];
 
+  // Load and merge cached threat feed with built-in indicators.
+  const cachedFeed = options?.offline ? null : loadCachedFeed(options?.cachePath);
+  const merged = mergeIndicators(
+    {
+      c2IpPatterns: C2_IP_PATTERNS,
+      c2Domains: C2_DOMAINS,
+      maliciousHashes: KNOWN_MALICIOUS_HASHES,
+      maliciousPackages: KNOWN_MALICIOUS_PACKAGES,
+    },
+    cachedFeed,
+  );
+
+  // Build merged detection rules for this scan (incorporate feed's C2 patterns if any new ones).
+  let effectiveRules = DETECTION_RULES;
+  if (cachedFeed && (merged.c2IpPatterns.length > C2_IP_PATTERNS.length || merged.c2Domains.length > C2_DOMAINS.length)) {
+    // Rebuild C2 rules with merged patterns
+    const mergedIpRule: DetectionRule = {
+      id: "C2-KNOWN-IP",
+      severity: "critical",
+      description: "Known malicious C2 server IP address",
+      pattern: new RegExp(merged.c2IpPatterns.join("|")),
+    };
+    const mergedDomainRule: DetectionRule = {
+      id: "C2-KNOWN-DOMAIN",
+      severity: "critical",
+      description: "Known malicious domain associated with ClawHavoc/AMOS campaigns",
+      pattern: new RegExp(merged.c2Domains.join("|")),
+    };
+    // Replace the first two rules (C2-KNOWN-IP and C2-KNOWN-DOMAIN) with merged versions
+    effectiveRules = [mergedIpRule, mergedDomainRule, ...DETECTION_RULES.slice(2)];
+  }
+
   for (const file of files) {
-    // Check SHA-256 hash against known-malicious set.
+    // Check SHA-256 hash against known-malicious set (built-in + cached feed).
     const fileHash = await hashFile(file);
-    if (fileHash && KNOWN_MALICIOUS_HASHES.has(fileHash)) {
+    if (fileHash && merged.maliciousHashes.has(fileHash)) {
       findings.push({
         severity: "critical",
         rule: "HASH-KNOWN-MALICIOUS",
@@ -124,7 +162,7 @@ export async function scanSkill(skillPath: string, options?: ScanSkillOptions): 
       });
     }
 
-    const fileFindings = scanFile(file, DETECTION_RULES);
+    const fileFindings = scanFile(file, effectiveRules);
     for (const f of fileFindings) {
       f.file = relative(absPath, f.file);
     }
@@ -188,6 +226,10 @@ export function getDefaultSkillPaths(): string[] {
 export interface RunScanOptions {
   skillPaths?: string[];
   allowlist?: Allowlist;
+  /** Path to the threat-feed cache file. */
+  cachePath?: string;
+  /** Skip loading the cached threat feed. */
+  offline?: boolean;
 }
 
 export async function runScan(options?: RunScanOptions): Promise<ScanResult> {
@@ -195,7 +237,11 @@ export async function runScan(options?: RunScanOptions): Promise<ScanResult> {
   const skills: SkillReport[] = [];
 
   for (const p of paths) {
-    skills.push(await scanSkill(p, { allowlist: options?.allowlist }));
+    skills.push(await scanSkill(p, {
+      allowlist: options?.allowlist,
+      cachePath: options?.cachePath,
+      offline: options?.offline,
+    }));
   }
 
   // Sort: worst scores first

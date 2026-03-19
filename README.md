@@ -41,6 +41,15 @@ clawhub-scanner scan --verbose
 
 # Show scanned directories
 clawhub-scanner paths
+
+# Update threat intelligence feeds
+clawhub-scanner update
+
+# Update from a custom URL
+clawhub-scanner update --source https://your-org.com/feeds/threat-feed.json
+
+# Update from a local file
+clawhub-scanner update --source /path/to/local-feed.json
 ```
 
 ### Options
@@ -54,6 +63,30 @@ clawhub-scanner paths
 | `--quiet` | `-q` | Suppress output when no issues found |
 | `--output <file>` | `-o` | Write report to file (text or JSON based on `--json` flag) |
 | `--allowlist <path>` | `-a` | Path to allowlist JSON file |
+
+### `update` command options
+
+| Flag | Description |
+|------|-------------|
+| `--source <url-or-path>` | URL or local file path for the feed (default: GitHub raw) |
+| `--cache <path>` | Override cache file location (default: `~/.config/clawhub-scanner/threat-feed.json`) |
+| `--timeout <ms>` | HTTP request timeout in milliseconds (default: 15000) |
+
+## Threat Intelligence Feed Format
+
+The `update` command fetches a JSON file and merges it with built-in indicators. The feed is cached locally at `~/.config/clawhub-scanner/threat-feed.json`.
+
+```json
+{
+  "version": "1.0",
+  "c2IpPatterns": ["91\\.92\\.242\\.31", "185\\.215\\.113\\.\\d+"],
+  "c2Domains": ["new-evil\\.com", "malware\\.io"],
+  "maliciousHashes": ["sha256hexhash..."],
+  "maliciousPackages": ["evil-npm-package"]
+}
+```
+
+All fields are optional. The scanner merges these with its built-in indicators at scan time, so existing detections are never removed by an update. Pass `--offline` to `clawhub-scanner scan` to skip loading the cached feed.
 
 ## What It Detects
 
