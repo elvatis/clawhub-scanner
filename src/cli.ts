@@ -3,7 +3,7 @@ import { writeFileSync } from "node:fs";
 import { Command } from "commander";
 import { runScan, scanSkill, getDefaultSkillPaths } from "./scanner.js";
 import { loadAllowlist } from "./allowlist.js";
-import { printReport, formatJson } from "./reporter.js";
+import { printReport, formatJson, formatSarif } from "./reporter.js";
 import { updateThreatFeed, DEFAULT_FEED_URL, getDefaultCachePath } from "./updater.js";
 import type { Allowlist } from "./types.js";
 
@@ -20,6 +20,7 @@ program
   .option("-s, --skill <path>", "Scan a specific skill directory")
   .option("--scan-path <path>", "Alias for --skill: scan a specific skill directory")
   .option("-j, --json", "Output results as JSON")
+  .option("--sarif", "Output results as SARIF 2.1.0 (for GitHub Code Scanning / CI security gates)")
   .option("-v, --verbose", "Show all findings including low severity")
   .option("-q, --quiet", "Only output if issues found")
   .option("-o, --output <file>", "Write report to a file (JSON when --json flag set, human-readable text otherwise)")
@@ -72,10 +73,12 @@ program
     }
 
     if (opts.output) {
-      // Bug fix: respect --json flag when writing to file.
-      // Previously always wrote JSON regardless of --json flag.
-      // Now: --json writes JSON to file; without --json writes human-readable text.
-      if (opts.json) {
+      if (opts.sarif) {
+        const sarifOutput = formatSarif(result);
+        writeFileSync(opts.output, sarifOutput, "utf-8");
+        // Also print to stdout for piping
+        console.log(sarifOutput);
+      } else if (opts.json) {
         writeFileSync(opts.output, formatJson(result), "utf-8");
         // Also print JSON to stdout for piping
         console.log(formatJson(result));
@@ -93,6 +96,8 @@ program
         console.log = orig;
         writeFileSync(opts.output, lines.join("\n") + "\n", "utf-8");
       }
+    } else if (opts.sarif) {
+      console.log(formatSarif(result));
     } else if (opts.json) {
       console.log(formatJson(result));
     } else {

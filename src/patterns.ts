@@ -435,4 +435,44 @@ export const DETECTION_RULES: DetectionRule[] = [
     pattern: /"(?:prepare|prepublish|prepublishOnly)"\s*:\s*"[^"]*(?:curl|wget|fetch|http|bash|sh\s)[^"]*"/,
     fileFilter: /package\.json$/,
   },
+
+  // === CRITICAL: Hardcoded API keys with known service prefixes ===
+  {
+    id: "CRED-HARDCODED-KEY",
+    severity: "critical",
+    description: "Hardcoded API key with known service prefix (AWS AKIA/ASIA, Anthropic sk-ant-, OpenAI sk-proj-, Stripe sk-live-)",
+    pattern: /\bAKIA[0-9A-Z]{16}\b|\bASIA[0-9A-Z]{16}\b|\bsk-ant-[a-zA-Z0-9\-_]{20,}|\bsk-proj-[a-zA-Z0-9\-_]{20,}|\bsk-live-[a-zA-Z0-9]{20,}|\bsk_live_[a-zA-Z0-9]{20,}/,
+  },
+
+  // === HIGH: Invisible / direction-manipulating Unicode (GlassWorm campaign technique) ===
+  {
+    id: "OBFUSC-INVISIBLE-UNICODE",
+    severity: "high",
+    description: "Invisible or direction-manipulating Unicode characters (zero-width space, RTL override, BOM, soft hyphen) — used by GlassWorm and other campaigns to hide malicious code in plain sight",
+    // \u200b-\u200d: zero-width space/non-joiner/joiner
+    // \u202a-\u202e: LTR/RTL embedding + RTL override (weaponised for filename spoofing)
+    // \u2060-\u2064: word joiner, invisible separators
+    // \ufeff: byte-order mark mid-file (obfuscation)
+    // \u00ad: soft hyphen (invisible in most editors)
+    pattern: /[\u200b\u200c\u200d\u202a\u202b\u202c\u202d\u202e\u2060\u2061\u2062\u2063\u2064\ufeff\u00ad]/,
+    fileFilter: /\.(js|ts|mjs|cjs|json|md|yaml|yml)$/,
+  },
+
+  // === HIGH: Solana blockchain C2 communication (GlassWorm campaign) ===
+  {
+    id: "C2-SOLANA-RPC",
+    severity: "high",
+    description: "Solana blockchain RPC call — the GlassWorm campaign delivers C2 commands via Solana memo-program transactions, making the channel appear as legitimate blockchain traffic",
+    pattern: /api\.mainnet-beta\.solana\.com|rpc\.helius\.xyz|MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr|['"`]solana['"`].*getTransaction|sendTransaction.*memo/i,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
+
+  // === HIGH: Dead-drop C2 resolver ===
+  {
+    id: "EXFIL-DEAD-DROP",
+    severity: "high",
+    description: "Dead-drop C2 resolver — attacker-controlled content on legitimate platforms (Steam Community profile, DNS-over-HTTPS, GitHub Gist raw) used to serve dynamic C2 addresses without a dedicated C2 domain",
+    pattern: /steamcommunity\.com\/profiles\/\d+|dns\.google\/resolve\?name=|cloudflare-dns\.com\/dns-query[^"'`]*name=|raw\.githubusercontent\.com[^"'`]{0,80}\/[a-f0-9]{40}/i,
+    fileFilter: /\.(js|ts|mjs|cjs)$/,
+  },
 ];

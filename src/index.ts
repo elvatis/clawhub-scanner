@@ -16,7 +16,7 @@ export type { ScanSkillOptions, RunScanOptions } from "./scanner.js";
 export { loadAllowlist, resolveAllowlistPaths, applyAllowlist, isSuppressed } from "./allowlist.js";
 
 // Reporter helpers
-export { printReport, formatJson } from "./reporter.js";
+export { printReport, formatJson, formatSarif } from "./reporter.js";
 
 // All public types
 export type {

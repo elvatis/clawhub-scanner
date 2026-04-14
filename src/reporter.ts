@@ -103,3 +103,96 @@ export function printReport(result: ScanResult): void {
 export function formatJson(result: ScanResult): string {
   return JSON.stringify(result, null, 2);
 }
+
+/**
+ * Format scan results as SARIF 2.1.0 (Static Analysis Results Interchange Format).
+ *
+ * SARIF is the standard consumed by GitHub Code Scanning, VS Code SARIF Viewer,
+ * and most modern CI security gates. Upload the output with:
+ *
+ *   clawhub-scanner scan --sarif -o results.sarif
+ *   gh upload-sarif --sarif-file results.sarif
+ *
+ * Severity mapping: critical/high → error, medium → warning, low → note, info → none
+ */
+export function formatSarif(result: ScanResult, toolVersion = "0.1.3"): string {
+  const sarifLevel = (s: Severity): string => {
+    if (s === "critical" || s === "high") return "error";
+    if (s === "medium") return "warning";
+    if (s === "low") return "note";
+    return "none";
+  };
+
+  // Collect the unique rule set across all findings (driver.rules must be exhaustive).
+  const ruleMap = new Map<string, { id: string; description: string; severity: Severity }>();
+  for (const skill of result.skills) {
+    for (const f of skill.findings) {
+      if (!ruleMap.has(f.rule)) {
+        ruleMap.set(f.rule, { id: f.rule, description: f.description, severity: f.severity });
+      }
+    }
+  }
+
+  const rules = [...ruleMap.values()].map((r) => ({
+    id: r.id,
+    // SARIF rule names must be camelCase per the spec.
+    name: r.id.replace(/-([a-z])/gi, (_, c: string) => c.toUpperCase()),
+    shortDescription: { text: r.description },
+    helpUri: "https://github.com/elvatis/clawhub-scanner",
+    properties: {
+      tags: ["security", "supply-chain"],
+      "security-severity": r.severity === "critical" ? "9.8"
+        : r.severity === "high" ? "7.5"
+        : r.severity === "medium" ? "4.0"
+        : "2.0",
+    },
+  }));
+
+  const sarifResults: object[] = [];
+  for (const skill of result.skills) {
+    for (const f of skill.findings) {
+      const region: Record<string, number> = {};
+      if (f.line != null) region["startLine"] = f.line;
+
+      sarifResults.push({
+        ruleId: f.rule,
+        level: sarifLevel(f.severity),
+        message: {
+          text: f.match ? `${f.description} — match: ${f.match}` : f.description,
+        },
+        locations: [
+          {
+            physicalLocation: {
+              artifactLocation: {
+                uri: f.file.replace(/\\/g, "/"),
+                uriBaseId: "%SRCROOT%",
+              },
+              ...(Object.keys(region).length > 0 ? { region } : {}),
+            },
+          },
+        ],
+      });
+    }
+  }
+
+  const sarif = {
+    $schema:
+      "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+    version: "2.1.0",
+    runs: [
+      {
+        tool: {
+          driver: {
+            name: "clawhub-scanner",
+            version: toolVersion,
+            informationUri: "https://github.com/elvatis/clawhub-scanner",
+            rules,
+          },
+        },
+        results: sarifResults,
+      },
+    ],
+  };
+
+  return JSON.stringify(sarif, null, 2);
+}

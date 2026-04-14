@@ -1,0 +1,82 @@
+[
+  {
+    "rule": "*",
+    "file": "src/patterns.ts",
+    "reason": "Detection-rules source file — every regex in this file intentionally references malicious signatures (eval, child_process, .ssh/, .aws/, C2 domains, etc.) for the purpose of detecting them in scanned skills. These strings are pattern definitions, not active malicious code."
+  },
+  {
+    "rule": "*",
+    "file": "dist/patterns.js",
+    "reason": "Detection-rules compiled output — same as src/patterns.ts. The suspicious-looking strings are regex pattern definitions used to identify malicious behavior in other packages."
+  },
+  {
+    "rule": "*",
+    "file": "src/indicators.ts",
+    "reason": "IoC database source file — intentionally contains known malicious IP addresses, CIDR ranges, domains, file hashes, and package names from public threat intelligence reports (Snyk Feb 2026, VirusTotal, CVE advisories). This is the scanner's reference data, not active infrastructure."
+  },
+  {
+    "rule": "*",
+    "file": "dist/indicators.js",
+    "reason": "IoC database compiled output — same as src/indicators.ts. Contains public threat intelligence data as string constants."
+  },
+  {
+    "rule": "FS-BROAD-READ",
+    "file": "src/scanner.ts",
+    "reason": "Core scanner reads ~/.openclaw/skills and ~/.npm-global/.../openclaw/skills to discover installed OpenClaw skills. This is the scanner's documented, primary purpose — reading the user's skill directories to scan them."
+  },
+  {
+    "rule": "FS-BROAD-READ",
+    "file": "dist/scanner.js",
+    "reason": "Core scanner compiled output — same as src/scanner.ts."
+  },
+  {
+    "rule": "NET-OUTBOUND",
+    "file": "src/updater.ts",
+    "reason": "Threat-feed updater fetches from https://raw.githubusercontent.com/elvatis/clawhub-scanner/main/threat-feed.json to refresh IoC data. This is a documented, opt-in feature triggered only by `clawhub-scanner update`. The URL is hardcoded to the project's own GitHub repo."
+  },
+  {
+    "rule": "NET-OUTBOUND",
+    "file": "dist/updater.js",
+    "reason": "Threat-feed updater compiled output — same as src/updater.ts."
+  },
+  {
+    "rule": "FS-BROAD-READ",
+    "file": "src/updater.ts",
+    "reason": "Threat-feed updater reads and writes ~/.config/clawhub-scanner/threat-feed.json to cache the fetched IoC feed locally. Standard XDG-compliant config directory usage."
+  },
+  {
+    "rule": "FS-BROAD-READ",
+    "file": "dist/updater.js",
+    "reason": "Threat-feed updater compiled output — same as src/updater.ts."
+  },
+  {
+    "rule": "FS-BROAD-READ",
+    "file": "src/allowlist.ts",
+    "reason": "Allowlist loader reads ~/.config/clawhub-scanner/allowlist.json to load the user's global false-positive suppressions. Standard XDG-compliant config directory usage."
+  },
+  {
+    "rule": "FS-BROAD-READ",
+    "file": "dist/allowlist.js",
+    "reason": "Allowlist loader compiled output — same as src/allowlist.ts."
+  },
+  {
+    "rule": "INJECT-IGNORE-PREV",
+    "file": "README.md",
+    "reason": "README documents prompt-injection detection with example patterns that match this rule. The content is educational documentation, not an active injection attempt."
+  },
+  {
+    "rule": "INJECT-SYSTEM-OVERRIDE",
+    "file": "README.md",
+    "reason": "README documents prompt-injection detection with example patterns that match this rule. The content is educational documentation, not an active injection attempt."
+  },
+  {
+    "rule": "INJECT-TOOL-ABUSE",
+    "file": "README.md",
+    "reason": "README documents prompt-injection detection with example patterns that match this rule. The content is educational documentation, not an active injection attempt."
+  },
+  {
+    "rule": "*",
+    "file": "tests/**",
+    "reason": "Test fixtures intentionally contain every malicious pattern variant to verify detection rules fire correctly. These are controlled test inputs, not active malicious code."
+  }
+]

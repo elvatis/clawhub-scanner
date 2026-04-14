@@ -192,6 +192,11 @@ export const KNOWN_MALICIOUS_HASHES = new Set<string>([
 /**
  * Known typosquatted / malicious npm package names observed in ClawHub skills.
  * Skills that declare dependencies on these packages are highly suspicious.
+ *
+ * Also includes AI-hallucinated package names — packages that LLMs (Claude, GPT-4, etc.)
+ * frequently suggest as dependencies but do not exist on npm. Attackers register these
+ * names as a dependency-confusion / hallucination-squatting attack vector.
+ * Source: supply-chain-guard hallucination watchlist + community reports (Apr 2026).
  */
 export const KNOWN_MALICIOUS_PACKAGES = new Set<string>([
   // Typosquats of popular packages (observed in ClawHavoc campaign)
@@ -213,4 +218,26 @@ export const KNOWN_MALICIOUS_PACKAGES = new Set<string>([
   "skill-loader-pro",
   "openclaw-telemetry",
   "clawhub-analytics",
+
+  // AI-hallucinated OpenClaw / ClawHub SDK packages
+  // LLMs frequently suggest these non-existent packages when writing OpenClaw skills.
+  // Attackers register them to intercept installs (hallucination-squatting).
+  "openclaw-sdk",        // hallucinated — real entry point is the openclaw CLI
+  "clawhub-client",      // hallucinated — no official client library
+  "clawhub-sdk",         // hallucinated — no official SDK
+  "openclaw-types",      // hallucinated — types are bundled with the tool
+  "openclaw-agent",      // hallucinated — no separate agent package
+
+  // AI-hallucinated Claude / Anthropic ecosystem packages
+  // The real package is @anthropic-ai/sdk; these variants are frequently hallucinated.
+  "anthropic-tools",     // hallucinated — no such official package
+  "claude-tools",        // hallucinated — no such official package
+  "claude-sdk-node",     // hallucinated — real package is @anthropic-ai/sdk
+  "anthropic-node",      // hallucinated — real package is @anthropic-ai/sdk
+
+  // AI-hallucinated OpenAI / LangChain ecosystem packages
+  "openai-tools",        // hallucinated — real package is openai
+  "openai-helpers",      // hallucinated — real package is openai
+  "langchain-tools",     // hallucinated — real package is langchain
+  "langchain-utils",     // hallucinated — real package is langchain
 ]);

@@ -26,7 +26,8 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    ".clawhub-allowlist.json"
   ],
   "keywords": [
     "openclaw",
